@@ -1,0 +1,13 @@
+*
+
+!.gitignore
+
+!skills/
+!skills/speak
+!skills/speak/**/*
+
+!commands/
+!commands/*
+
+!scripts/
+!scripts/*

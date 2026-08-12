@@ -1,0 +1,7 @@
+{
+  "name": "speak",
+  "displayName": "Speak",
+  "version": "1.0.0",
+  "description": "Announces Claude events via macOS say. Speaks notifications, permission requests, and task completion. Uses Milena for Russian text, Samantha for English.",
+  "hooks": "./hooks/hooks.json"
+}
