@@ -12,8 +12,13 @@ def is_russian(text):
 
 
 def speak(text):
-    voice = 'Milena' if is_russian(text) else 'Samantha'
-    subprocess.run(['say', '-v', voice, text])
+    russian = is_russian(text)
+    if sys.platform == 'darwin':
+        voice = 'Milena' if russian else 'Samantha'
+        subprocess.run(['say', '-v', voice, text])
+    else:
+        voice = 'ru_RU-irina-medium' if russian else 'en_US-lessac-medium'
+        subprocess.run(['python3', '-m', 'piper', '-m', voice, '--data-dir', str(Path.home() / '.piper'), '--', text])
 
 
 def has_running_subagents(session_id):
