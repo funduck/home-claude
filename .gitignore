@@ -3,6 +3,8 @@
 !.gitignore
 
 !skills/
+!skills/clarity
+!skills/clarity/**/*
 !skills/speak
 !skills/speak/**/*
 
