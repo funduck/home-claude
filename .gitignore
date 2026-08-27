@@ -7,6 +7,8 @@
 !skills/clarity/**/*
 !skills/speak
 !skills/speak/**/*
+!skills/go-1-27
+!skills/go-1-27/**/*
 
 !commands/
 !commands/*
