@@ -97,3 +97,17 @@ Reports goroutines blocked on a concurrency primitive that is unreachable from a
 Blind spots: a primitive still referenced by a global, or by a live goroutine's locals, is "reachable" and the leak is not reported. So a clean profile is not proof of no leaks; a non-empty one is a real bug.
 
 Use it in a test after the system under test shuts down, or scrape the endpoint from a long-running service.
+
+## Other things worth reaching for
+
+- `strings.CutLast` / `bytes.CutLast` — split on the **last** separator; replaces `LastIndex` + manual slicing.
+- `encoding/json/v2` — stricter (rejects invalid UTF-8 and duplicate object keys), variadic `Options`, much faster unmarshal. `inline` tag is now `embed`; `format`/`unknown` options are gone. Plain `encoding/json` is already backed by v2, so error strings may differ from 1.26 — don't assert on them.
+- `net/url`: `(*URL).Clone()`, `Values.Clone()` — use instead of hand-rolled deep copies.
+- `net/http`: `Server.MaxHeaderValueCount` for header-flood limits; HTTP/1 response bodies auto-drain on close, so connection reuse no longer needs a manual `io.Copy(io.Discard, resp.Body)`.
+- `hash/maphash.ComparableHasher`, `math/big.(*Int).Divide(x, y, mode)` with `Trunc`/`Floor`/`Round`/`Ceil`.
+- `go doc pkg@v1.2.3` and `go doc -ex` for examples.
+- `go fix` modernizers: `atomictypes`, `embedlit`, `slicesbackward`, `unsafefuncs`.
+- `crypto/mldsa` (FIPS 204 post-quantum signatures), wired into `crypto/x509` and TLS 1.3.
+- Runtime: small allocations up to ~30% faster, no code change needed. `tls.Config.Rand` is deprecated — use `testing/cryptotest.SetGlobalRandom`.
+
+Skip unless asked: `simd`/`simd/archsimd` are experimental and need `GOEXPERIMENT=simd`.
