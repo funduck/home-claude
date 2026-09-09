@@ -11,6 +11,7 @@ or as a CLI:
     client.py say "hello there"
     client.py open https://example.com
     client.py notify "Title" "message body"
+    client.py focus
 
 Fail-soft: any transport error prints a warning to stderr and returns None
 (exit 0 for the CLI) so a hook never blocks Claude.
@@ -74,6 +75,8 @@ def _main(argv):
         result = call('open', target=argv[1])
     elif action == 'notify':
         result = call('notify', title=argv[1], message=argv[2])
+    elif action == 'focus':
+        result = call('focus')
     else:
         result = call(action, **dict(a.split('=', 1) for a in argv[1:]))
     if result is None:

@@ -1,16 +1,39 @@
 #!/usr/bin/env python3
 import json
+import os
 import re
 import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
+# The spoken line is considered "seen" only if the terminal running Claude was
+# frontmost AND the machine was active within this many seconds. Otherwise we
+# also raise a desktop notification so the message isn't missed.
+IDLE_GRACE = float(os.environ.get('NOTIFY_IDLE_SECONDS', '60'))
 
-def speak(text):
+
+def _call():
     sys.path.insert(0, str(Path.home() / '.claude' / 'scripts' / 'server'))
     from client import call
+    return call
+
+
+# Spoken lines matching any of these never raise a desktop notification (the
+# audio cue is enough; a banner for "waiting for input" is just noise).
+NOTIFY_SUPPRESS = ('waiting for your input',)
+
+
+def announce(title, text):
+    """Speak `text`; unless the user was looking at the terminal, also notify."""
+    call = _call()
     call('say', text=text)
+    if any(s in text.lower() for s in NOTIFY_SUPPRESS):
+        return
+    focus = call('focus') or {}
+    seen = focus.get('terminal_frontmost') and focus.get('idle_seconds', 1e9) < IDLE_GRACE
+    if not seen:
+        call('notify', title=title, message=text)
 
 
 def has_running_subagents(session_id):
@@ -114,12 +137,13 @@ def make_message(data):
     return f"{project_name()}: {action}"
 
 
-try:
-    data = json.load(sys.stdin)
-except (json.JSONDecodeError, ValueError):
-    speak('Claude needs attention')
-    sys.exit(0)
+if __name__ == '__main__':
+    try:
+        data = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError):
+        announce('Claude', 'Claude needs attention')
+        sys.exit(0)
 
-text = make_message(data)
-if text:
-    speak(text)
+    text = make_message(data)
+    if text:
+        announce(project_name(), text)

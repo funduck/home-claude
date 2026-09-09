@@ -23,7 +23,9 @@ from urllib.parse import urlparse
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR.parent / 'say'))
+sys.path.insert(0, str(SCRIPT_DIR.parent / 'notification'))
 from say import say  # noqa: E402 - scripts/say/say.py
+from notification import notify, host_idle_seconds, frontmost_app  # noqa: E402 - scripts/notification/notification.py
 
 PORT = int(os.environ.get('SPEAK_SERVER_PORT', '8787'))
 BIND = os.environ.get('SPEAK_SERVER_BIND', '127.0.0.1')
@@ -32,6 +34,13 @@ TOKEN_FILE = Path(os.environ.get('SPEAK_SERVER_TOKEN_FILE', SCRIPT_DIR / 'secret
 MAX_BODY = 64 * 1024
 EXEC_TIMEOUT = 30
 OUTPUT_CAP = 4 * 1024
+
+_DEFAULT_TERMINAL_APPS = 'iTerm,Terminal,WezTerm,Alacritty,kitty,Ghostty,Hyper,tmux'
+TERMINAL_APPS = [
+    a.strip().lower()
+    for a in os.environ.get('SPEAK_SERVER_TERMINAL_APPS', _DEFAULT_TERMINAL_APPS).split(',')
+    if a.strip()
+]
 
 OPEN_ROOTS = [Path.home(), Path('/tmp'), Path('/private/tmp')]
 _extra_root = os.environ.get('SPEAK_SERVER_OPEN_ROOTS', '')
@@ -106,8 +115,24 @@ def action_open(params):
 def action_notify(params):
     title = _require_str(params, 'title', 200)
     message = _require_str(params, 'message', 500)
-    script = f'display notification {json.dumps(message)} with title {json.dumps(title)}'
-    return ['osascript', '-e', script]
+    ok = notify(title, message, timeout=EXEC_TIMEOUT)
+    return {'ok': bool(ok), 'code': 0 if ok else 1}
+
+
+def _is_terminal(name, bundle):
+    hay = f'{name} {bundle}'.lower()
+    return any(app in hay for app in TERMINAL_APPS)
+
+
+def action_focus(params):
+    name, bundle = frontmost_app()
+    return {
+        'ok': True,
+        'app': name,
+        'bundle_id': bundle,
+        'idle_seconds': host_idle_seconds(),
+        'terminal_frontmost': _is_terminal(name, bundle),
+    }
 
 
 def _is_within(path, root):
@@ -122,6 +147,7 @@ ACTIONS = {
     'say': action_say,
     'open': action_open,
     'notify': action_notify,
+    'focus': action_focus,
 }
 
 

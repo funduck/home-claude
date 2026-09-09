@@ -17,6 +17,8 @@
 
 !scripts/
 !scripts/*
+!scripts/notification/
+!scripts/notification/**/*
 !scripts/say/
 !scripts/say/**/*
 !scripts/server/

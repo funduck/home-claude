@@ -21,7 +21,8 @@ inside the Linux devcontainer.
 |----------|---------------------------------|----------------------------------------|
 | `say`    | `text`                          | `scripts/say/say.py`'s `say()` in-process (macOS `say -v <voice>`, else `piper`); voice picked by language |
 | `open`   | `target` (http/https URL, or existing path under `$HOME` / `/tmp`) | `open -- TARGET` |
-| `notify` | `title`, `message`              | `osascript -e 'display notification …'` |
+| `notify` | `title`, `message`              | `scripts/notification/notification.py`'s `notify()` in-process (`osascript -e 'display notification …'`) |
+| `focus`  | —                               | `scripts/notification/notification.py`; returns `app`, `bundle_id`, `idle_seconds` (macOS `HIDIdleTime`), and `terminal_frontmost` (frontmost app is one of `SPEAK_SERVER_TERMINAL_APPS`) |
 
 Add more in the `ACTIONS` dict in `server.py`. A handler returns an `argv` list
 (run via `subprocess`, `shell=False`) or a result `dict` (work already done).
@@ -45,7 +46,15 @@ python3 .claude/scripts/server/server.py
 ```sh
 python3 .claude/scripts/server/client.py say "hello"
 python3 .claude/scripts/server/client.py open https://example.com
+python3 .claude/scripts/server/client.py focus
 ```
 
+The `speak` hook uses `focus` to decide whether a spoken message was likely
+seen: if the frontmost app isn't the terminal running Claude (or the machine has
+been idle > `NOTIFY_IDLE_SECONDS`, default 60), it also fires a `notify` banner.
+
 Environment overrides: `SPEAK_SERVER_HOST`, `SPEAK_SERVER_PORT`,
-`SPEAK_SERVER_BIND`, `SPEAK_SERVER_TOKEN_FILE`, `SPEAK_SERVER_OPEN_ROOTS`.
+`SPEAK_SERVER_BIND`, `SPEAK_SERVER_TOKEN_FILE`, `SPEAK_SERVER_OPEN_ROOTS`,
+`SPEAK_SERVER_TERMINAL_APPS` (comma-separated app names/bundle-id fragments that
+count as "Claude is visible"; default covers iTerm, Terminal, WezTerm, Alacritty,
+kitty, Ghostty, Hyper, tmux).
