@@ -17,3 +17,11 @@
 
 !scripts/
 !scripts/*
+!scripts/say/
+!scripts/say/**/*
+!scripts/server/
+!scripts/server/**/*
+scripts/server/secret
+scripts/server/server.log
+**/__pycache__/
+**/.DS_Store

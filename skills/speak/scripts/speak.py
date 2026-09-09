@@ -7,18 +7,10 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 
-def is_russian(text):
-    return bool(re.search('[А-Яа-яЁё]', text))
-
-
 def speak(text):
-    russian = is_russian(text)
-    if sys.platform == 'darwin':
-        voice = 'Milena' if russian else 'Samantha'
-        subprocess.run(['say', '-v', voice, text])
-    else:
-        voice = 'ru_RU-irina-medium' if russian else 'en_US-lessac-medium'
-        subprocess.run(['python3', '-m', 'piper', '-m', voice, '--data-dir', str(Path.home() / '.piper'), '--', text])
+    sys.path.insert(0, str(Path.home() / '.claude' / 'scripts' / 'server'))
+    from client import call
+    call('say', text=text)
 
 
 def has_running_subagents(session_id):
