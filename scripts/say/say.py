@@ -15,7 +15,8 @@ def say(text, timeout=None):
     russian = is_russian(text)
     if sys.platform == 'darwin':
         voice = 'Milena' if russian else 'Samantha'
-        argv = ['say', '-v', voice, '--', text]
+        # Leading silence: Bluetooth headphones wake up late and clip the first words.
+        argv = ['say', '-v', voice, '--', f'[[slnc 300]] {text}']
     else:
         voice = 'ru_RU-irina-medium' if russian else 'en_US-lessac-medium'
         argv = ['python3', '-m', 'piper', '-m', voice, '--data-dir', str(Path.home() / '.piper'), '--', text]

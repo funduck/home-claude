@@ -45,21 +45,24 @@ def frontmost_app():
     """(display_name, bundle_id) of the frontmost macOS app; ('', '') on failure.
 
     Uses `lsappinfo`, which needs no Automation/Accessibility permission. Falls
-    back to System Events via osascript if `lsappinfo` is unavailable.
+    back to System Events via osascript (1s timeout) if `lsappinfo` fails.
     """
     if sys.platform != 'darwin':
         return ('', '')
     front = _run(['lsappinfo', 'front']).strip()
     if front:
         info = _run(['lsappinfo', 'info', '-only', 'name', '-only', 'bundleID', front])
-        name = re.search(r'"LSDisplayName"\s*=\s*"([^"]*)"', info)
-        bundle = re.search(r'"CFBundleIdentifier"\s*=\s*"([^"]*)"', info)
+        # Output: `"iTerm2" ASN:0x0-0x2f02f: (in front)\n    bundleID="com.googlecode.iterm2"`
+        name = re.match(r'\s*"([^"]*)"', info)
+        bundle = re.search(r'bundleID="([^"]*)"', info)
         if name or bundle:
             return (name.group(1) if name else '', bundle.group(1) if bundle else '')
+        print(f'notify: unparsed lsappinfo output: {info!r}', file=sys.stderr)
+    # Short timeout: System Events can block forever on an Automation prompt.
     name = _run([
         'osascript', '-e',
         'tell application "System Events" to get name of first application process whose frontmost is true',
-    ]).strip()
+    ], timeout=1).strip()
     return (name, '')
 
 
